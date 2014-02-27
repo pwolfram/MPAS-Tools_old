@@ -32,10 +32,10 @@ MpasDraw.x:
 		c: (connectivity)
 			The lowercase c key cycles between cells that are draw, the options are the Delaunay triangulation,
 			the Voronoi diagram, and the edges. Edges are drawn as rectangles made up of two cell centers, and two
-			cell vertices.
+			cell vertices.  A third press shows particles.
 
 		w: (wireframe)
-			The lowercase w key toggles the wireframe on and off.
+			The lowercase w key toggles between Voronoi diagram, cell - edge lines, edge - edge lines, and no lines.
 
 		b: (colorbar)
 			The lowercase b key toggles the color bar scale. 

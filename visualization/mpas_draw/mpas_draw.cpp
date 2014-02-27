@@ -23,6 +23,8 @@ using namespace std;
 int main ( int argc, char *argv[] );
 void display ( );
 void mouse ( int btn, int state, int x, int y );
+void MouseMotionCallback( int x, int y );
+void mouseWheel( int btn, int dir, int x, int y );
 void gl_init ( );
 void myReshape ( int w, int h );
 void single_screenshot ( );
@@ -70,8 +72,13 @@ void control_sequence();
 //
 //  Global data.
 //
+
 string filename;
 static GLint axis = 1;
+// Stored mouse position for camera rotation, panning, and zoom.
+int gPreviousMouseX = -1;
+int gPreviousMouseY = -1;
+int gMouseButton = -1;
 GLint window;
 int drawing = 1;
 int draw_lines = 1;
@@ -178,7 +185,7 @@ double *particle_values;
 GLfloat point_size;
 
 string line_type[5] = {"Voronoi diagram",
-  "cell edges","all edges", "none"};
+  "cell edges","edge edges", "none"};
 string drawing_type[5] = {"Delaunay triangulation", "Voronoi diagram",
   "all edges" , "particles", "none"};
 /* }}} */
@@ -281,6 +288,8 @@ int main ( int argc, char *argv[] ){/*{{{*/
 	glutMouseFunc ( mouse );
 	glutKeyboardFunc( keyPressed );
 	glutSpecialFunc( arrowKeys );
+  glutMotionFunc( MouseMotionCallback );
+  //glutMouseWheelFunc( mouseWheel );
 
 	//
 	//  Enable hidden surface removal.
@@ -335,7 +344,15 @@ void display ( ){/*{{{*/
 	//    Second Edition,
 	//    Addison Wesley, 2000.
 
+  //glClearColor(.1f, .1f, .1f, 1.0f);
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+  //glViewport(0,0, gWindowSizeX, gWindowSizeY);
+
+  //glMatrixMode( GL_PROJECTION );
+  //glLoadIdentity();
+
+  //float aspectRatio = float(gWindowSizeX) / float(gWindowSizeY);
+  //gluPerspective(60.0f, aspectRatio, 0.1f, 100.0f);
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();						// moves to center of screen
@@ -345,6 +362,7 @@ void display ( ){/*{{{*/
 	if(on_sphere && draw_sphere){
 		drawSphere(0.98, 40, 40);
 	}
+
 
 	switch(drawing){
 		case 0:
@@ -424,15 +442,121 @@ void mouse ( int btn, int state, int x, int y ){/*{{{*/
 	//    Second Edition,
 	//    Addison Wesley, 2000.
 	//
-	if ( ( btn == GLUT_LEFT_BUTTON   && state == GLUT_DOWN ) ||
-			( btn == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN ) ||
-			( btn == GLUT_RIGHT_BUTTON  && state == GLUT_DOWN ) ) {
-	}
+
+  if (btn == GLUT_LEFT_BUTTON || btn == GLUT_RIGHT_BUTTON)
+    gMouseButton = btn;
+  else
+    gMouseButton = -1; 
+
+  if (state == GLUT_UP) {
+    gPreviousMouseX = -1; 
+    gPreviousMouseY = -1; 
+  }
+  //else {
+  //  float zoomSensitivity = 1.0f;
+  //  if (btn == 3 || btn == 4) {
+  //    projDistance += zoomSensitivity;
+  //    zFar += zoomSensitivity;
+
+  //  }
+  //  else if (btn == 4) {
+  //    projDistance -= zoomSensitivity;
+  //    zFar -= zoomSensitivity;
+  //  }
+  //}
 
 	axis = axis % 3;
 
 	return;
 }/*}}}*/
+
+void mouseWheel(int btn, int dir, int x, int y) { /*}}}*/
+	//****************************************************************************80
+	//
+	//  Purpose:
+	//
+	//    Utilize the mouse wheel for zooming
+	//
+	//  Licensing:
+	//
+	//    This code is distributed under the GNU LGPL license.
+	//
+	//  Modified:
+	//
+	//    02/27/2014
+	//
+	//  Author:
+	//
+	//    Phillip Wolfram
+  //
+	//  Reference:
+	//
+	//    http://stackoverflow.com/questions/14378/using-the-mouse-scrollwheel-in-glut
+  //
+  float zoomSensitivity = 0.2f;
+  if (dir > 0) {
+        projDistance += zoomSensitivity;
+        zFar += zoomSensitivity;
+  }
+  else {
+        projDistance -= zoomSensitivity;
+        zFar -= zoomSensitivity;
+  }
+
+}/*}}}*/
+void MouseMotionCallback(int x, int y) { /*{{{*/
+	//****************************************************************************80
+	//
+	//  Purpose:
+	//
+	//    Mouse motion callback to allow better navigation in gui
+	//
+	//  Licensing:
+	//
+	//    This code is distributed under the GNU LGPL license.
+	//
+	//  Modified:
+	//
+	//    02/27/2014
+	//
+	//  Author:
+	//
+	//    Phillip Wolfram
+  //
+	//  Reference:
+	//
+	//    CS148
+  //
+  if (gPreviousMouseX >= 0 && gPreviousMouseY >= 0) {
+    //compute delta
+    float deltaX = float(x)-gPreviousMouseX;
+    float deltaY = float(y)-gPreviousMouseY;
+
+    gPreviousMouseX = x;
+    gPreviousMouseY = y;
+
+    float zoomSensitivity = 0.2f;
+    float rotateSensitivity = 0.5f;
+
+    //orbit or zoom
+    if (gMouseButton == GLUT_LEFT_BUTTON) {   
+      projAzimuth += (-deltaX*rotateSensitivity);
+      projElevation += (-deltaY*rotateSensitivity);
+
+    } 
+    else if (gMouseButton == GLUT_RIGHT_BUTTON) {
+        projDistance += (deltaX* zoomSensitivity);
+        zFar += (deltaX* zoomSensitivity);
+    }
+  } 
+  else {
+    gPreviousMouseX = x;
+    gPreviousMouseY = y;
+  }
+
+} /*}}}*/
+
+
 void gl_init ( ){/*{{{*/
 	//****************************************************************************80
 	//
@@ -1492,7 +1616,7 @@ void draw_points ( ){/*{{{*/
 	//
 	
 	glColorPointer( 3, GL_FLOAT, 0, &particle_colors[0] );
-  glPointSize(point_size);
+  //glPointSize(point_size);
 	glVertexPointer( 3, GL_FLOAT, 0, &particle_points[0] );
 	glDrawArrays( GL_POINTS , 0, particle_points.size()/3);
 
