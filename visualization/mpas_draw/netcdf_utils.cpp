@@ -481,6 +481,67 @@ void netcdf_mpas_read_xyzedge ( string filename, int nedges, double xedge[], dou
 	return;
 }/*}}}*/
 //****************************************************************************80
+void netcdf_mpas_read_xyzparticle ( string filename, int nparticles, double xparticle [], double yparticle[], double zparticle[] ){/*{{{*/
+
+	//****************************************************************************80
+	//
+	//  Purpose:
+	//
+	//    NETCDF_MPAS_READ_PARTICLE gets the particle coordinates.
+	//
+	//  Licensing:
+	//
+	//    This code is distributed under the GNU LGPL license.
+	//
+	//  Modified:
+	//
+	//    02/27/2014
+	//
+	//  Author:
+	//
+	//    Phillip Wolfram, John Burkardt, Doug Jacobsen
+	//
+	//  Reference:
+	//
+	//    Russ Rew, Glenn Davis, Steve Emmerson, Harvey Davies, Ed Hartne,
+	//    The NETCDF User's Guide,
+	//    Unidata Program Center, March 2009.
+	//
+	//  Parameters:
+	//
+	//    Input, string NC_FILENAME, the name of the NETCDF file to examine.
+	//
+	//    Input, int NPARTICLES, the number of particles.
+	//
+	//    Output, double XPARTICLE[NPARTICLES], YPARTICLE[NPARTICLES], 
+	//    ZPARTICLE[NPARTICLES], the coordinates of the particles.
+	//
+	NcVar *var_id;
+	//
+	//  Open the file.
+	#ifdef _64BITOFFSET
+		NcFile ncid ( filename.c_str ( ), NcFile::ReadOnly, NULL, 0, NcFile::Offset64Bits );
+	#else
+		NcFile ncid ( filename.c_str ( ), NcFile::ReadOnly );
+	#endif
+	//
+	//
+	//  Get the variable values.
+	//
+	var_id = ncid.get_var ( "xParticle" );
+	(*var_id).get ( &xparticle[0], nparticles );
+	var_id = ncid.get_var ( "yParticle" );
+	(*var_id).get ( &yparticle[0], nparticles );
+	var_id = ncid.get_var ( "zParticle" );
+	(*var_id).get ( &zparticle[0], nparticles );
+	//
+	//  Close the file.
+	//
+	ncid.close ( );
+
+	return;
+}/*}}}*/
+//****************************************************************************80
 void netcdf_mpas_read_verticesoncell ( string filename, int maxedges, int ncells, int verticesOnCell[] ){/*{{{*/
 
 	//****************************************************************************80
@@ -1204,6 +1265,139 @@ int netcdf_mpas_list_nedge_fields(string filename){/*{{{*/
 	return choice;
 }/*}}}*/
 //****************************************************************************80
+int netcdf_mpas_list_nparticle_fields(string filename){/*{{{*/
+	//****************************************************************************80
+	//
+	//  Purpose:
+	//
+	//    NETCDF_MPAS_LIST_NPARTICLE_FIELDS lists all fields that are printable 
+  //    based on nParticles
+	//
+	//  Licensing:
+	//
+	//    This code is distributed under the GNU LGPL license.
+	//
+	//  Modified:
+	//
+	//    02/27/2014
+	//
+	//  Author:
+	//
+	//    Phillip Wolfram, Doug Jacobsen
+	//
+	//  Reference:
+	//
+	//    Russ Rew, Glenn Davis, Steve Emmerson, Harvey Davies, Ed Hartne,
+	//    The NETCDF User's Guide,
+	//    Unidata Program Center, March 2009.
+	//
+	//  Parameters:
+	//
+	//    Input, string NC_FILENAME, the name of the NETCDF file to examine.
+	#ifdef _64BITOFFSET
+		NcFile ncid ( filename.c_str ( ), NcFile::ReadOnly, NULL, 0, NcFile::Offset64Bits );
+	#else
+		NcFile ncid ( filename.c_str ( ), NcFile::ReadOnly );
+	#endif
+	NcVar *var_id;
+	NcDim  *nparticle_dim;
+	NcToken nparticle_tok;
+	NcToken dim_name;
+	string name;
+	vector<NcToken> var_names;
+	vector<int> var_ids;
+	int included;
+	int has_nparticles;
+	int num_vars;
+	int num_dims;
+	int i;
+	int j;
+	int choice = 0;
+	int valid = 0;
+	bool failed;
+
+	vector<string> excluded_vars;
+
+	//excluded_vars.push_back("xParticles");
+	//excluded_vars.push_back("yParticles");
+	//excluded_vars.push_back("zParticles");
+
+	num_vars = ncid.num_vars();
+	nparticle_dim = ncid.get_dim("nParticles");
+	nparticle_tok= nparticle_dim->name();
+
+	for(i = 0; i < num_vars; i++){
+		var_id = ncid.get_var(i);
+		num_dims = var_id->num_dims();
+		included = 1;
+		name = var_id->name();
+		for(j = 0; j < excluded_vars.size(); j++){
+			if(excluded_vars.at(j) == name){
+				included = 0;
+			}
+		}
+
+		if(included){
+			has_nparticles = 0;
+
+			for(j = 0; j < num_dims; j++){
+				dim_name = (var_id->get_dim(j))->name();
+				if(nparticle_tok == dim_name){
+					has_nparticles= 1;
+				}
+			}
+
+			if(has_nparticles){
+				var_names.push_back(var_id->name());
+				var_ids.push_back(i);
+			}
+		}
+	}
+
+	if(var_names.empty()){
+		cout << endl;
+		cout << "No variables indexed by nParticles to color with." << endl;
+	}
+
+	while(!valid && !var_names.empty()){
+		cout << endl;
+		cout << "Available variables indexed by nParticles." << endl;
+		for(i = 0; i < var_names.size(); i++){
+			cout << var_ids.at(i) << "\t" << var_names.at(i) << ":\t";
+			num_dims = ncid.get_var(var_ids.at(i))->num_dims();
+			for(j = 0; j < num_dims-1; j++){
+				cout << ncid.get_var(var_ids.at(i))->get_dim(j)->name() << "*";
+			}
+			cout << ncid.get_var(var_ids.at(i))->get_dim(num_dims-1)->name() << endl;
+		}
+		cout << endl << endl;
+		cout << "Enter the number of the field you would like to print" << endl;
+		cout << "Choose from list above, or enter -1 for default:" << endl;
+		do{
+			cin >> choice;
+			if(cin.fail()){
+				failed = true;
+				cin.clear();
+				cin.ignore(1024,'\n');
+				cout << "Invalid input or the input buffer needed to be cleared. Please try again." << endl;
+			} else {
+				failed = false;
+			}
+		}while(failed);
+
+		for(i = 0; i < var_ids.size(); i++){
+			if(var_ids.at(i) == choice){
+				valid = 1;
+			}
+		}
+
+		if(choice == -1){
+			valid = 1;
+		}
+	}
+	return choice;
+}/*}}}*/
+//****************************************************************************80
 int netcdf_mpas_field_num_dims(string filename, int id){/*{{{*/
 	//****************************************************************************80
 	//
@@ -1435,7 +1629,7 @@ void netcdf_mpas_read_field(string filename, int id, double values[], int cur_ti
 	NcVar *var_id;
 	int num_dims;
 	int type;
-	int nCells, nEdges, nVertices, nVertLevels;
+	int nCells, nEdges, nVertices, nVertLevels, nParticles;
 	int elementDim, timeDim, vertLevelsDim;
 	long *dims;
 	//
@@ -1457,7 +1651,7 @@ void netcdf_mpas_read_field(string filename, int id, double values[], int cur_ti
 	vertLevelsDim = -1;
 	for(int i = 0; i < num_dims; i++){
 		dims[i] = var_id->get_dim(i)->size();
-		if(strcmp(var_id->get_dim(i)->name(), "nCells") == 0 || strcmp(var_id->get_dim(i)->name(), "nEdges") == 0 || strcmp(var_id->get_dim(i)->name(), "nVertices") == 0){
+		if(strcmp(var_id->get_dim(i)->name(), "nCells") == 0 || strcmp(var_id->get_dim(i)->name(), "nEdges") == 0 || strcmp(var_id->get_dim(i)->name(), "nVertices") == 0 || strcmp(var_id->get_dim(i)->name(), "nParticles") == 0){
 			elementDim = i;
 		}
 		if(strcmp(var_id->get_dim(i)->name(), "Time") == 0){
@@ -1469,6 +1663,7 @@ void netcdf_mpas_read_field(string filename, int id, double values[], int cur_ti
 	}
 	nCells = netcdf_mpas_read_dim (filename, "nCells");
 	nEdges = netcdf_mpas_read_dim (filename, "nEdges");
+  nParticles = netcdf_mpas_read_dim(filename, "nParticles");
 	nVertices = netcdf_mpas_read_dim (filename, "nVertices");
 	nVertLevels = netcdf_mpas_read_dim (filename, "nVertLevels");
 
