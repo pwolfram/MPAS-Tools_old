@@ -26,7 +26,6 @@ int main ( int argc, char *argv[] );
 void display ( );
 void mouse ( int btn, int state, int x, int y );
 void MouseMotionCallback( int x, int y );
-void mouseWheel( int btn, int dir, int x, int y );
 void gl_init ( );
 void myReshape ( int w, int h );
 void single_screenshot ( );
@@ -288,7 +287,6 @@ int main ( int argc, char *argv[] ){/*{{{*/
 	glutKeyboardFunc( keyPressed );
 	glutSpecialFunc( arrowKeys );
   glutMotionFunc( MouseMotionCallback );
-  //glutMouseWheelFunc( mouseWheel );
 
 	//
 	//  Enable hidden surface removal.
@@ -343,15 +341,7 @@ void display ( ){/*{{{*/
 	//    Second Edition,
 	//    Addison Wesley, 2000.
 
-  //glClearColor(.1f, .1f, .1f, 1.0f);
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-  //glViewport(0,0, gWindowSizeX, gWindowSizeY);
-
-  //glMatrixMode( GL_PROJECTION );
-  //glLoadIdentity();
-
-  //float aspectRatio = float(gWindowSizeX) / float(gWindowSizeY);
-  //gluPerspective(60.0f, aspectRatio, 0.1f, 100.0f);
 
 	glMatrixMode( GL_MODELVIEW );
 	glLoadIdentity();						// moves to center of screen
@@ -451,58 +441,12 @@ void mouse ( int btn, int state, int x, int y ){/*{{{*/
     gPreviousMouseX = -1; 
     gPreviousMouseY = -1; 
   }
-  //else {
-  //  float zoomSensitivity = 1.0f;
-  //  if (btn == 3 || btn == 4) {
-  //    projDistance += zoomSensitivity;
-  //    zFar += zoomSensitivity;
-
-  //  }
-  //  else if (btn == 4) {
-  //    projDistance -= zoomSensitivity;
-  //    zFar -= zoomSensitivity;
-  //  }
-  //}
 
 	axis = axis % 3;
 
 	return;
 }/*}}}*/
 
-void mouseWheel(int btn, int dir, int x, int y) { /*}}}*/
-	//****************************************************************************80
-	//
-	//  Purpose:
-	//
-	//    Utilize the mouse wheel for zooming
-	//
-	//  Licensing:
-	//
-	//    This code is distributed under the GNU LGPL license.
-	//
-	//  Modified:
-	//
-	//    02/27/2014
-	//
-	//  Author:
-	//
-	//    Phillip Wolfram
-  //
-	//  Reference:
-	//
-	//    http://stackoverflow.com/questions/14378/using-the-mouse-scrollwheel-in-glut
-  //
-  float zoomSensitivity = 0.2f;
-  if (dir > 0) {
-        projDistance += zoomSensitivity;
-        zFar += zoomSensitivity;
-  }
-  else {
-        projDistance -= zoomSensitivity;
-        zFar -= zoomSensitivity;
-  }
-
-}/*}}}*/
 void MouseMotionCallback(int x, int y) { /*{{{*/
 	//****************************************************************************80
 	//
