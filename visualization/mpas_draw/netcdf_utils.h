@@ -8,7 +8,7 @@ int netcdf_mpas_read_num_vars(string filename);
 void netcdf_mpas_read_xyzcell ( string filename, int ncells, double xcell[], double ycell[], double zcell[] );
 void netcdf_mpas_read_xyzvertex ( string filename, int nvertices, double xvertex[], double yvertex[], double zvertex[] );
 void netcdf_mpas_read_xyzedge ( string filename, int nedges, double xedge[], double yedge[], double zedge[] );
-void netcdf_mpas_read_xyzparticle ( string filename, int nparticles , double xparticle[], double yparticle[], double zparticle[] );
+void netcdf_mpas_read_xyzparticle ( string filename, int nparticles, int timestep, double xparticle[], double yparticle[], double zparticle[] );
 void netcdf_mpas_read_verticesoncell ( string filename, int maxedges, int ncells, int verticesOnCell[] );
 void netcdf_mpas_read_verticesonedge ( string filename, int nedges, int verticesonedge[] );
 void netcdf_mpas_read_cellsonvertex ( string filename, int nvertices, int cellsonvertex[] );

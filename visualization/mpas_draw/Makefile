@@ -3,7 +3,7 @@ CXX=g++
 CXXFLAGS= -O3 -m64
 #NETCDF=/opt/netcdf/3.6.3/64
 
-DBGFLAGS= -g -m64
+DBGFLAGS= -g -m64 -Wl,-no_pie
 
 #OFFSETFLAG=-D_64BITOFFSET
 

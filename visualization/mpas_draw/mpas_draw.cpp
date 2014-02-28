@@ -32,6 +32,7 @@ void single_screenshot ( );
 void timestamp ( );
 
 void build_connectivity();
+void load_lagrangian_particles(int timestep);
 void setup_ranges();
 void build_range(int id);
 
@@ -266,6 +267,7 @@ int main ( int argc, char *argv[] ){/*{{{*/
 	}
 
 	build_connectivity();
+  load_lagrangian_particles(cur_time);
 	setup_ranges();
 	color_cells();
 	color_triangles();
@@ -364,6 +366,8 @@ void display ( ){/*{{{*/
 			draw_edges();
 			break;
     case 3:
+      // reload particle positions
+      load_lagrangian_particles(cur_time);
       draw_points();
       break;
 	}
@@ -1211,10 +1215,12 @@ void build_connectivity(){/*{{{*/
 	cell_values = new double[ncells];
 	triangle_values = new double[nvertices];
 	edge_values = new double[nedges];
+  particle_values = new double[nparticles];
 
 	color_cells();
 	color_triangles();
 	color_edges();
+  color_particles();
 
 	delete [] xcell;
 	delete [] ycell;
@@ -1223,23 +1229,27 @@ void build_connectivity(){/*{{{*/
 	delete [] yvertex;
 	delete [] zvertex;
   
+}/*}}}*/
+
+void load_lagrangian_particles(int timestep) { /*{{{*/
   /* load Lagrangian particle points*/ /* {{{ */
-	nparticles = netcdf_mpas_read_dim(filename, "nParticles");
-  particle_values = new double[nparticles];
+	//nparticles = netcdf_mpas_read_dim(filename, "nParticles");
+  //particle_values = new double[nparticles];
 	xparticle = new double[nparticles];
 	yparticle = new double[nparticles];
 	zparticle = new double[nparticles];
-	netcdf_mpas_read_xyzparticle ( filename, nparticles, xparticle, yparticle, zparticle );
-  for ( i = 0; i < nparticles; i++ ) {
+	netcdf_mpas_read_xyzparticle ( filename, nparticles, timestep, xparticle, yparticle, zparticle );
+  particle_points.clear();
+  for ( int i = 0; i < nparticles; i++ ) {
     // rescale
 		xparticle[i] = (xparticle[i] - xyz_center[0]) / xyz_scale;
 		yparticle[i] = (yparticle[i] - xyz_center[1]) / xyz_scale;
 		zparticle[i] = (zparticle[i] - xyz_center[2]) / xyz_scale;
+    //printf("particle %d locations = %f %f %f\n", i, xparticle[i], yparticle[i], zparticle[i]);
     particle_points.push_back(xparticle[i]);
     particle_points.push_back(yparticle[i]);
     particle_points.push_back(zparticle[i]);
   }
-  color_particles();
   delete [] xparticle;
   delete [] yparticle;
   delete [] zparticle;
