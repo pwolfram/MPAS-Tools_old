@@ -481,7 +481,7 @@ void netcdf_mpas_read_xyzedge ( string filename, int nedges, double xedge[], dou
 	return;
 }/*}}}*/
 //****************************************************************************80
-void netcdf_mpas_read_xyzparticle ( string filename, int nparticles, double xparticle [], double yparticle[], double zparticle[] ){/*{{{*/
+void netcdf_mpas_read_xyzparticle ( string filename, int nparticles, int timestep, double xparticle [], double yparticle[], double zparticle[] ){/*{{{*/
 
 	//****************************************************************************80
 	//
@@ -512,6 +512,8 @@ void netcdf_mpas_read_xyzparticle ( string filename, int nparticles, double xpar
 	//    Input, string NC_FILENAME, the name of the NETCDF file to examine.
 	//
 	//    Input, int NPARTICLES, the number of particles.
+  //
+  //    Input, int TIMESTEP, the timestep to plot.
 	//
 	//    Output, double XPARTICLE[NPARTICLES], YPARTICLE[NPARTICLES], 
 	//    ZPARTICLE[NPARTICLES], the coordinates of the particles.
@@ -529,11 +531,16 @@ void netcdf_mpas_read_xyzparticle ( string filename, int nparticles, double xpar
 	//  Get the variable values.
 	//
 	var_id = ncid.get_var ( "xParticle" );
-	(*var_id).get ( &xparticle[0], nparticles );
-	var_id = ncid.get_var ( "yParticle" );
-	(*var_id).get ( &yparticle[0], nparticles );
-	var_id = ncid.get_var ( "zParticle" );
-	(*var_id).get ( &zparticle[0], nparticles );
+	(*var_id).set_cur( timestep, 0 );
+	(*var_id).get ( &xparticle[0], 1, nparticles );
+	
+  var_id = ncid.get_var ( "yParticle" );
+	(*var_id).set_cur( timestep, 0 );
+	(*var_id).get ( &yparticle[0], 1, nparticles );
+	
+  var_id = ncid.get_var ( "zParticle" );
+	(*var_id).set_cur( timestep, 0 );
+	(*var_id).get ( &zparticle[0], 1, nparticles );
 	//
 	//  Close the file.
 	//
