@@ -483,7 +483,7 @@ void MouseMotionCallback(int x, int y) { /*{{{*/
     gPreviousMouseX = x;
     gPreviousMouseY = y;
 
-    float zoomSensitivity = 0.2f;
+    float zoomSensitivity = 0.1f;
     float rotateSensitivity = 0.5f;
 
     //orbit or zoom
