@@ -1241,6 +1241,7 @@ void load_lagrangian_particles(int timestep) { /*{{{*/
   particle_points.clear();
   for ( int i = 0; i < nparticles; i++ ) {
     // rescale
+    //printf("particle %d locations = %f %f %f\n", i, xparticle[i], yparticle[i], zparticle[i]);
 		xparticle[i] = (xparticle[i] - xyz_center[0]) / xyz_scale;
 		yparticle[i] = (yparticle[i] - xyz_center[1]) / xyz_scale;
 		zparticle[i] = (zparticle[i] - xyz_center[2]) / xyz_scale;
@@ -1573,6 +1574,7 @@ void draw_points ( ){/*{{{*/
   //glPointSize(point_size);
 	glVertexPointer( 3, GL_FLOAT, 0, &particle_points[0] );
 	glDrawArrays( GL_POINTS , 0, particle_points.size()/3);
+  //printf("particlepoints/3= %d \n ",particle_points.size()/3);
 
   //glBegin(GL_POINTS);
   //for (int i=0; i < nparticles; i++ )  {
