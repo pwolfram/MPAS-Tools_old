@@ -93,7 +93,7 @@ double region_line_factor = 1.01;
 double region_center_factor = 1.013;
 double range_factor = 0.80;
 double zNear = 0.1;
-double zFar = 2.5;
+double zFar = 10.0;
 
 double projUpDown = 0.0;
 double projLeftRight = 0.0;
@@ -623,8 +623,8 @@ void myReshape ( int w, int h ){/*{{{*/
 	glMatrixMode ( GL_PROJECTION );
 	glLoadIdentity ( );
 
-	gluPerspective( 45.0f, (GLfloat)w / (GLfloat)h, 0.1f, 5.0f );
-	//gluPerspective( 45.0f, (GLfloat)w / (GLfloat)h, (GLfloat)zNear, (GLfloat)zFar);
+	//gluPerspective( 45.0f, (GLfloat)w / (GLfloat)h, 0.1f, 10.0f );
+	gluPerspective( 45.0f, (GLfloat)w / (GLfloat)h, (GLfloat)zNear, (GLfloat)zFar);
 	//glMatrixMode ( GL_MODELVIEW );
 
 	return;
@@ -2078,9 +2078,16 @@ void color_particles(){/*{{{*/
 	v = 1.0;
 	if(particle_field == -1){
 		for(i = 0; i < nparticles; i++){
+      /*
+      // gray
 				particle_colors.push_back(0.8);
 				particle_colors.push_back(0.8);
 				particle_colors.push_back(0.8);
+        */
+      // red
+      particle_colors.push_back(1.0);
+      particle_colors.push_back(0.0);
+      particle_colors.push_back(0.0);
 		}
 	} else {
 		netcdf_mpas_read_field(filename, particle_field, particle_values, cur_time, cur_level);
@@ -2423,7 +2430,7 @@ void keyPressed( unsigned char key, int x, int y ) {/*{{{*/
 			cell_field = 0;
 			edge_field = 0;
 			vertex_field = 0;
-			particle_field = 0;
+			particle_field = -1;
 			color_bar = 0;
 			projDistance = 3.0;
 			projUpDown = 0.0;
