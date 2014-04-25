@@ -532,15 +532,15 @@ void netcdf_mpas_read_xyzparticle ( string filename, int nparticles, int timeste
 	//
 	var_id = ncid.get_var ( "xParticle" );
 	(*var_id).set_cur( timestep, 0 );
-	(*var_id).get ( &xparticle[0], nparticles );
+	(*var_id).get ( &xparticle[0], 1,nparticles );
 	
   var_id = ncid.get_var ( "yParticle" );
 	(*var_id).set_cur( timestep, 0 );
-	(*var_id).get ( &yparticle[0], nparticles );
+	(*var_id).get ( &yparticle[0], 1,nparticles );
 	
   var_id = ncid.get_var ( "zParticle" );
 	(*var_id).set_cur( timestep, 0 );
-	(*var_id).get ( &zparticle[0], nparticles );
+	(*var_id).get ( &zparticle[0], 1,nparticles );
 	//
 	//  Close the file.
 	//
