@@ -2485,6 +2485,7 @@ void keyPressed( unsigned char key, int x, int y ) {/*{{{*/
 			draw_sphere = !draw_sphere;
 			break;
 		case KEY_q:
+      display();
 			char filename[100];
 			sprintf(filename, "ss.%04d.tga", cur_screenshot);
 			screenshot(filename, 800, 800);
