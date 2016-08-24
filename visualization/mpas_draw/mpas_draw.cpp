@@ -411,11 +411,11 @@ void mouse ( int btn, int state, int x, int y ){/*{{{*/
   if (btn == GLUT_LEFT_BUTTON || btn == GLUT_RIGHT_BUTTON)
     gMouseButton = btn;
   else
-    gMouseButton = -1; 
+    gMouseButton = -1;
 
   if (state == GLUT_UP) {
-    gPreviousMouseX = -1; 
-    gPreviousMouseY = -1; 
+    gPreviousMouseX = -1;
+    gPreviousMouseY = -1;
   }
 
 	axis = axis % 3;
@@ -458,16 +458,16 @@ void MouseMotionCallback(int x, int y) { /*{{{*/
     float rotateSensitivity = 0.5f;
 
     //orbit or zoom
-    if (gMouseButton == GLUT_LEFT_BUTTON) {   
+    if (gMouseButton == GLUT_LEFT_BUTTON) {
       projAzimuth += (-deltaX*rotateSensitivity);
       projElevation += (-deltaY*rotateSensitivity);
 
-    } 
+    }
     else if (gMouseButton == GLUT_RIGHT_BUTTON) {
         projDistance += (deltaX* zoomSensitivity);
         zFar += (deltaX* zoomSensitivity);
     }
-  } 
+  }
   else {
     gPreviousMouseX = x;
     gPreviousMouseY = y;
@@ -1193,7 +1193,7 @@ void build_connectivity(){/*{{{*/
 	delete [] xvertex;
 	delete [] yvertex;
 	delete [] zvertex;
-  
+
 }/*}}}*/
 void setup_ranges(){/*{{{*/
 	int num_vars;
