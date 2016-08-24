@@ -164,6 +164,25 @@ double xyz_min[3];
 double xyz_range[3];
 double xyz_scale;
 
+/* Lagrangian particle plotting */ /* {{{ */ 
+double *xparticle;  // x location of particle
+double *yparticle;  // y location of particle
+double *zparticle;  // z location of particle
+int nparticles; // number of particles
+vector<GLfloat> particle_points;  // particle point locations
+vector<GLfloat> particle_colors;  // particle colors 
+void color_particles(); // function to color the points 
+void draw_points();  // function to draw the points
+int particle_field = -1; 
+double *particle_values; 
+GLfloat point_size;
+
+string line_type[5] = {"Voronoi diagram",
+  "cell edges","all edges", "none"};
+string drawing_type[5] = {"Delaunay triangulation", "Voronoi diagram",
+  "all edges" , "particles", "none"};
+/* }}} */
+
 int main ( int argc, char *argv[] ){/*{{{*/
 
 	//****************************************************************************80
@@ -246,6 +265,7 @@ int main ( int argc, char *argv[] ){/*{{{*/
 	color_cells();
 	color_triangles();
 	color_edges();
+  color_particles();
 
 	//
 	//  Hand things over to OpenGL.
@@ -336,6 +356,9 @@ void display ( ){/*{{{*/
 		case 2:
 			draw_edges();
 			break;
+    case 3:
+      draw_points();
+      break;
 	}
 
 	switch(draw_lines){
@@ -437,7 +460,7 @@ void gl_init ( ){/*{{{*/
 	//    Second Edition,
 	//    Addison Wesley, 2000.
 	GLfloat line_width;
-	GLfloat point_size;
+	//GLfloat point_size;
 	//
 	//  Set the background to WHITE.
 	//
@@ -661,6 +684,7 @@ void build_connectivity(){/*{{{*/
 	ncells = netcdf_mpas_read_dim (filename, "nCells");
 	nvertices = netcdf_mpas_read_dim(filename, "nVertices");
 	nedges = netcdf_mpas_read_dim(filename, "nEdges");
+  nparticles = netcdf_mpas_read_dim(filename, "nParticles");
 	maxedges = netcdf_mpas_read_dim(filename, "maxEdges");
 	on_sphere = netcdf_mpas_read_onsphere(filename);
 	sphere_radius = netcdf_mpas_read_sphereradius(filename);
@@ -672,6 +696,7 @@ void build_connectivity(){/*{{{*/
 	vertex_lines.reserve((nvertices+1)*3*3*2);
 	edge_cells.reserve((nedges+1)*4*3);
 	edge_lines.reserve((nedges+1)*4*2*3);
+  particle_points.reserve((nparticles+1)*3); 
 
 	cout << "\n";
 	if(!on_sphere){
@@ -685,6 +710,7 @@ void build_connectivity(){/*{{{*/
 	cout << "  The number of cells NCELLS       = " << ncells << "\n";
 	cout << "  The number of vertices NVERTICES =  " << nvertices << "\n";
 	cout << "  The number of edges NEDGES =  " << nedges << "\n";
+	cout << "  The number of particles NPARTICLES =  " << nparticles << "\n";
 
 	xcell = new double[ncells];
 	ycell = new double[ncells];
@@ -1127,6 +1153,28 @@ void build_connectivity(){/*{{{*/
 	delete [] xvertex;
 	delete [] yvertex;
 	delete [] zvertex;
+  
+  /* load Lagrangian particle points*/ /* {{{ */
+	nparticles = netcdf_mpas_read_dim(filename, "nParticles");
+  particle_values = new double[nparticles];
+	xparticle = new double[nparticles];
+	yparticle = new double[nparticles];
+	zparticle = new double[nparticles];
+	netcdf_mpas_read_xyzparticle ( filename, nparticles, xparticle, yparticle, zparticle );
+  for ( i = 0; i < nparticles; i++ ) {
+    // rescale
+		xparticle[i] = (xparticle[i] - xyz_center[0]) / xyz_scale;
+		yparticle[i] = (yparticle[i] - xyz_center[1]) / xyz_scale;
+		zparticle[i] = (zparticle[i] - xyz_center[2]) / xyz_scale;
+    particle_points.push_back(xparticle[i]);
+    particle_points.push_back(yparticle[i]);
+    particle_points.push_back(zparticle[i]);
+  }
+  color_particles();
+  delete [] xparticle;
+  delete [] yparticle;
+  delete [] zparticle;
+ /*  }}} */
 
 }/*}}}*/
 void setup_ranges(){/*{{{*/
@@ -1202,6 +1250,8 @@ void build_range(int id){/*{{{*/
 			case 2:
 				num_items = nedges;
 				break;
+      case 3:
+        num_items = nparticles;
 			default:
 				return;
 				break;
@@ -1420,6 +1470,40 @@ void draw_edges ( ){/*{{{*/
 
 	return;
 }/*}}}*/
+void draw_points ( ){/*{{{*/
+
+	//****************************************************************************80
+	//
+	//  Purpose:
+	//
+	//    DRAW_POINTS draws points to represent particle values
+	//
+	//  Licensing:
+	//
+	//    This code is distributed under the GNU LGPL license.
+	//
+	//  Modified:
+	//
+	//    02/27/2014
+	//
+	//  Author:
+	//
+	//    Phillip Wolfram, Geoff Womeldorff, Doug Jacobsen
+	//
+	
+	glColorPointer( 3, GL_FLOAT, 0, &particle_colors[0] );
+  glPointSize(point_size);
+	glVertexPointer( 3, GL_FLOAT, 0, &particle_points[0] );
+	glDrawArrays( GL_POINTS , 0, particle_points.size()/3);
+
+  //glBegin(GL_POINTS);
+  //for (int i=0; i < nparticles; i++ )  {
+  //  glVertex3f(particle_points[3*i], particle_points[3*i+1],particle_points[3*i+2]);
+  //  printf("%f %f %f\n", particle_points[3*i], particle_points[3*i+1],particle_points[3*i+2]);
+  //}
+  //glEnd();
+	return;
+}/*}}}*/
 
 void draw_triangle_lines(){/*{{{*/
 	//****************************************************************************80
@@ -1619,6 +1703,9 @@ void color_mesh(){/*{{{*/
 		case 2:
 			color_edges();
 			break;
+    case 3:
+      color_particles();
+      break;
 		default:
 			break;
 	}
@@ -2237,6 +2324,82 @@ void color_edges(){/*{{{*/
 		}
 	}
 }/*}}}*/
+void color_particles(){/*{{{*/
+	//****************************************************************************80
+	//
+	//  Purpose:
+	//
+	//    COLOR_PARTICLES builds the color array used to display the particle points
+	//
+	//  Licensing:
+	//
+	//    This code is distributed under the GNU LGPL license.
+	//
+	//  Modified:
+	//
+	//    02/27/2014
+	//
+	//  Author:
+	//
+	//    Phillip Wolfram, Doug Jacobsen
+	//
+	int i, j, o;
+	double max, min;
+	float h, s, v;
+	float r, g, b;
+
+	particle_colors.clear();
+
+	s = 1.0;
+	v = 1.0;
+	if(particle_field == -1){
+		for(i = 0; i < nparticles; i++){
+				particle_colors.push_back(0.8);
+				particle_colors.push_back(0.8);
+				particle_colors.push_back(0.8);
+		}
+	} else {
+		netcdf_mpas_read_field(filename, particle_field, particle_values, cur_time, cur_level);
+
+		if(color_bar == 2){
+			min = ranges[particle_field][0];
+			max = ranges[particle_field][1];
+		} else if(color_bar == 1) {
+			min = hard_ranges.at(0);
+			max = hard_ranges.at(1);
+		} else {
+			r8vec_min_max(nparticles, particle_values, min, max, missing_value);
+		}
+
+		cout << "Min: " << min << " Max: " << max << endl;
+
+		for(i = 0; i < nparticles; i++){
+			if(particle_values[i] == missing_value){
+				r = 0.5;
+				g = 0.5;
+				b = 0.5;
+			} else {
+				if(max-min != 0.0){
+					if(particle_values[i] >= max){
+						h = range_factor;
+					} else if (particle_values[i] <= min){
+						h = 0.0;
+					} else {
+						h = (particle_values[i] - min)/(max-min)*range_factor;
+					}
+				} else {
+					h = (particle_values[i] - min)/1.0 * range_factor;
+				}
+
+				hsv_to_rgb(h, s, v, b, g, r);
+			}
+
+      particle_colors.push_back(r);
+      particle_colors.push_back(g);
+      particle_colors.push_back(b);
+		}
+	}
+}/*}}}*/
 
 void arrowKeys( int a_keys, int x, int y ) {/*{{{*/
 	//****************************************************************************80
@@ -2424,6 +2587,10 @@ void keyPressed( unsigned char key, int x, int y ) {/*{{{*/
 						build_range(edge_field);
 						cout << " Range of values: Min = " << ranges.at(edge_field).at(0) << ", Max = " << ranges.at(edge_field).at(1) << endl;
 						break;
+          case 3:
+            build_range(particle_field);
+						cout << " Range of values: Min = " << ranges.at(particle_field).at(0) << ", Max = " << ranges.at(particle_field).at(1) << endl;
+            break;
 					default:
 						break;
 				}
@@ -2456,6 +2623,10 @@ void keyPressed( unsigned char key, int x, int y ) {/*{{{*/
 						build_range(edge_field);
 						cout << " Range of values: Min = " << hard_ranges.at(0) << ", Max = " << hard_ranges.at(1) << endl;
 						break;
+          case 3:
+						build_range(particle_field);
+						cout << " Range of values: Min = " << hard_ranges.at(0) << ", Max = " << hard_ranges.at(1) << endl;
+            break;
 					default:
 						break;
 				}
@@ -2481,9 +2652,11 @@ void keyPressed( unsigned char key, int x, int y ) {/*{{{*/
 			break;
 		case KEY_w:
 			draw_lines = (draw_lines + 1) % 4;
+      cout << "drawing lines of " << line_type[draw_lines] << endl;
 			break;
 		case KEY_c:
-			drawing = ( drawing + 1 ) % 3;
+			drawing = ( drawing + 1 ) % 4;
+      cout << "drawing types of " << drawing_type[drawing] << endl;
 			break;
 		case KEY_COMMA:
 			projDistance += 0.05;
@@ -2528,6 +2701,14 @@ void keyPressed( unsigned char key, int x, int y ) {/*{{{*/
 						cout << " Range of values: Min = " << ranges.at(edge_field).at(0) << ", Max = " << ranges.at(edge_field).at(1) << endl;
 					}
 					break;
+        case 3: 
+					particle_field = netcdf_mpas_list_nparticle_fields(filename);
+					netcdf_mpas_print_field_info(filename, particle_field);
+					if(particle_field >= 0 && color_bar == 2){
+						build_range(particle_field);
+						cout << " Range of values: Min = " << ranges.at(particle_field).at(0) << ", Max = " << ranges.at(particle_field).at(1) << endl;
+					}
+          break;
 				default:
 					break;
 			}
@@ -2560,6 +2741,7 @@ void keyPressed( unsigned char key, int x, int y ) {/*{{{*/
 			cell_field = 0;
 			edge_field = 0;
 			vertex_field = 0;
+			particle_field = 0;
 			color_bar = 0;
 			projDistance = 3.0;
 			projUpDown = 0.0;
